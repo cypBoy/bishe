@@ -7,7 +7,7 @@ import com.ssm.model.Shares;
 import com.ssm.service.SharesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import util.DateUtil;
+import com.ssm.util.DateUtil;
 
 /**
  * @author dell

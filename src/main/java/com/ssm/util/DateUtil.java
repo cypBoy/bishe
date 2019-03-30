@@ -1,4 +1,4 @@
-package util;
+package com.ssm.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

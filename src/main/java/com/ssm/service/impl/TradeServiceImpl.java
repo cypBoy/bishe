@@ -7,7 +7,7 @@ import com.ssm.model.Trade;
 import com.ssm.service.TradeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import util.DateUtil;
+import com.ssm.util.DateUtil;
 
 /**
  * 收入Service实现类
