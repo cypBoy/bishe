@@ -3,10 +3,12 @@ package com.ssm.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.ssm.model.*;
+import com.ssm.model.Datadic;
+import com.ssm.model.PageBean;
+import com.ssm.model.Pay;
+import com.ssm.model.User;
 import com.ssm.service.DatadicService;
-import com.ssm.service.SharesService;
-import com.ssm.service.TradeService;
+import com.ssm.service.PayService;
 import com.ssm.service.UserService;
 import com.ssm.util.Constants;
 import com.ssm.util.ResponseUtil;
@@ -26,36 +28,34 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 /**
- * 收入Controller层
+ * 支出Controller层
  * 
  * @author dell
- * @date 2019/03/31
+ * @date 2019/04/02
  *
  */
 @Controller
-public class TradeController {
+public class PayController {
 
 	private static final Logger logger= LoggerFactory.getLogger(UserController.class);
 
 	@Autowired
-	private TradeService tradeService;
+	private PayService payService;
 	@Autowired
 	private DatadicService datadicService;
 	@Autowired
 	private UserService userService;
-	@Autowired
-	private SharesService sharesService;
-
+	
 
 	/**
-	 * 收入信息管理页面
+	 * 支出信息管理页面
 	 */
-	@RequestMapping("/tradeManage")
-	public String tradeManage(ModelMap map, HttpServletRequest request) {
-		List<Datadic> list = datadicService.getDatadicTrade();
-		map.addAttribute("trades", list);
-		
+	@RequestMapping("/payManage")
+	public String payManage(ModelMap map, HttpServletRequest request) {
+		List<Datadic> list = datadicService.getDatadicPay();
+		map.addAttribute("pays", list);
 		HttpSession session = request.getSession();
 		User curuser = (User)session.getAttribute(Constants.CURRENT_USER_SESSION_KEY);
 		Map<String, Object> userMap = new HashMap<String, Object>();
@@ -63,9 +63,7 @@ public class TradeController {
 		userMap.put("roleid", curuser.getRoleid());
 		List<User> userlist = userService.getAllUser(userMap);
 		map.addAttribute("allUsers", userlist);
-		List<Shares> shareslist = sharesService.getSharesName();
-		map.addAttribute("allShares", shareslist);
-		return "tradeManage";
+		return "payManage";
 	}
 
 	/**
@@ -73,29 +71,30 @@ public class TradeController {
 	 * 
 	 * @param page
 	 * @param rows
-	 * @param s_trade
+	 * @param s_pay
 	 * @param response
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping("/tradelist")
+	@RequestMapping("/paylist")
 	public String list(@RequestParam(value = "page", required = false) String page,
-					   @RequestParam(value = "rows", required = false) String rows, Trade s_trade, HttpServletResponse response)
+					   @RequestParam(value = "rows", required = false) String rows, Pay s_pay, HttpServletResponse response)
 			throws Exception {
 		PageBean pageBean = new PageBean(Integer.parseInt(page), Integer.parseInt(rows));
 		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("sharesname", StringUtil.formatLike(s_trade.getSharesname()));
-		map.put("dataid", s_trade.getDataid());
-		map.put("starttime", s_trade.getStarttime());
-		map.put("endtime", s_trade.getEndtime());
-		map.put("roleid", s_trade.getRoleid());
-		map.put("userid", s_trade.getUserid());
+		map.put("payer", StringUtil.formatLike(s_pay.getPayer()));
+		map.put("tword", StringUtil.formatLike(s_pay.getTword()));
+		map.put("dataid", s_pay.getDataid());
+		map.put("starttime", s_pay.getStarttime());
+		map.put("endtime", s_pay.getEndtime());
+		map.put("roleid", s_pay.getRoleid());
+		map.put("userid", s_pay.getUserid());
 		map.put("start", pageBean.getStart());
 		map.put("size", pageBean.getPageSize());
-		List<Trade> tradeList = tradeService.findTrade(map);
-		Long total = tradeService.getTotalTrade(map);
+		List<Pay> payList = payService.findPay(map);
+		Long total = payService.getTotalPay(map);
 		JSONObject result = new JSONObject();
-		JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(tradeList));
+		JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(payList));
 		result.put("rows", jsonArray);
 		result.put("total", total);
 		ResponseUtil.write(response, result);
@@ -103,22 +102,22 @@ public class TradeController {
 	}
 
 	/**
-	 * 添加与修改用户
+	 * 添加与修改支出
 	 * 
-	 * @param trade
+	 * @param pay
 	 * @param response
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping("/tradesave")
-	public String save(Trade trade, HttpServletResponse response) throws Exception {
+	@RequestMapping("/paysave")
+	public String save(Pay pay, HttpServletResponse response) throws Exception {
 		int resultTotal = 0; // 操作的记录条数
 		JSONObject result = new JSONObject();
 		
-		if (trade.getId() == null) {
-			resultTotal = tradeService.addTrade(trade);
+		if (pay.getId() == null) {
+			resultTotal = payService.addPay(pay);
 		} else {
-			resultTotal = tradeService.updateTrade(trade);
+			resultTotal = payService.updatePay(pay);
 		}
 
 		if (resultTotal > 0) { // 执行成功
@@ -140,17 +139,18 @@ public class TradeController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping("/tradedelete")
+	@RequestMapping("/paydelete")
 	public String delete(@RequestParam(value = "ids") String ids, HttpServletResponse response) throws Exception {
 		JSONObject result = new JSONObject();
 		String[] idsStr = ids.split(",");
 		for (int i = 0; i < idsStr.length; i++) {
-			tradeService.deleteTrade(Integer.parseInt(idsStr[i]));
+			payService.deletePay((Integer.parseInt(idsStr[i])));
 		}
 		result.put("errres", true);
 		result.put("errmsg", "数据删除成功！");
 		ResponseUtil.write(response, result);
 		return null;
 	}
+	
 
 }

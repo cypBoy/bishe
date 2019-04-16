@@ -3,10 +3,12 @@ package com.ssm.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.ssm.model.*;
+import com.ssm.model.Datadic;
+import com.ssm.model.Income;
+import com.ssm.model.PageBean;
+import com.ssm.model.User;
 import com.ssm.service.DatadicService;
-import com.ssm.service.SharesService;
-import com.ssm.service.TradeService;
+import com.ssm.service.IncomeService;
 import com.ssm.service.UserService;
 import com.ssm.util.Constants;
 import com.ssm.util.ResponseUtil;
@@ -26,35 +28,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 /**
  * 收入Controller层
  * 
  * @author dell
- * @date 2019/03/31
+ * @date 2019/04/02
  *
  */
 @Controller
-public class TradeController {
-
+public class IncomeController {
 	private static final Logger logger= LoggerFactory.getLogger(UserController.class);
 
 	@Autowired
-	private TradeService tradeService;
+	private IncomeService incomeService;
 	@Autowired
 	private DatadicService datadicService;
 	@Autowired
 	private UserService userService;
-	@Autowired
-	private SharesService sharesService;
 
 
 	/**
 	 * 收入信息管理页面
 	 */
-	@RequestMapping("/tradeManage")
-	public String tradeManage(ModelMap map, HttpServletRequest request) {
-		List<Datadic> list = datadicService.getDatadicTrade();
-		map.addAttribute("trades", list);
+	@RequestMapping("/incomeManage")
+	public String incomeManage(ModelMap map, HttpServletRequest request) {
+		List<Datadic> list = datadicService.getDatadicIncome();
+		map.addAttribute("incomes", list);
 		
 		HttpSession session = request.getSession();
 		User curuser = (User)session.getAttribute(Constants.CURRENT_USER_SESSION_KEY);
@@ -63,9 +63,7 @@ public class TradeController {
 		userMap.put("roleid", curuser.getRoleid());
 		List<User> userlist = userService.getAllUser(userMap);
 		map.addAttribute("allUsers", userlist);
-		List<Shares> shareslist = sharesService.getSharesName();
-		map.addAttribute("allShares", shareslist);
-		return "tradeManage";
+		return "incomeManage";
 	}
 
 	/**
@@ -73,29 +71,30 @@ public class TradeController {
 	 * 
 	 * @param page
 	 * @param rows
-	 * @param s_trade
+	 * @param s_income
 	 * @param response
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping("/tradelist")
+	@RequestMapping("/incomelist")
 	public String list(@RequestParam(value = "page", required = false) String page,
-					   @RequestParam(value = "rows", required = false) String rows, Trade s_trade, HttpServletResponse response)
+					   @RequestParam(value = "rows", required = false) String rows, Income s_income, HttpServletResponse response)
 			throws Exception {
 		PageBean pageBean = new PageBean(Integer.parseInt(page), Integer.parseInt(rows));
 		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("sharesname", StringUtil.formatLike(s_trade.getSharesname()));
-		map.put("dataid", s_trade.getDataid());
-		map.put("starttime", s_trade.getStarttime());
-		map.put("endtime", s_trade.getEndtime());
-		map.put("roleid", s_trade.getRoleid());
-		map.put("userid", s_trade.getUserid());
+		map.put("incomer", StringUtil.formatLike(s_income.getIncomer()));
+		map.put("source", StringUtil.formatLike(s_income.getSource()));
+		map.put("dataid", s_income.getDataid());
+		map.put("starttime", s_income.getStarttime());
+		map.put("endtime", s_income.getEndtime());
+		map.put("roleid", s_income.getRoleid());
+		map.put("userid", s_income.getUserid());
 		map.put("start", pageBean.getStart());
 		map.put("size", pageBean.getPageSize());
-		List<Trade> tradeList = tradeService.findTrade(map);
-		Long total = tradeService.getTotalTrade(map);
+		List<Income> incomeList = incomeService.findIncome(map);
+		Long total = incomeService.getTotalIncome(map);
 		JSONObject result = new JSONObject();
-		JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(tradeList));
+		JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(incomeList));
 		result.put("rows", jsonArray);
 		result.put("total", total);
 		ResponseUtil.write(response, result);
@@ -105,20 +104,20 @@ public class TradeController {
 	/**
 	 * 添加与修改用户
 	 * 
-	 * @param trade
+	 * @param income
 	 * @param response
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping("/tradesave")
-	public String save(Trade trade, HttpServletResponse response) throws Exception {
+	@RequestMapping("/incomesave")
+	public String save(Income income, HttpServletResponse response) throws Exception {
 		int resultTotal = 0; // 操作的记录条数
 		JSONObject result = new JSONObject();
 		
-		if (trade.getId() == null) {
-			resultTotal = tradeService.addTrade(trade);
+		if (income.getId() == null) {
+			resultTotal = incomeService.addIncome(income);
 		} else {
-			resultTotal = tradeService.updateTrade(trade);
+			resultTotal = incomeService.updateIncome(income);
 		}
 
 		if (resultTotal > 0) { // 执行成功
@@ -140,12 +139,12 @@ public class TradeController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping("/tradedelete")
+	@RequestMapping("/incomedelete")
 	public String delete(@RequestParam(value = "ids") String ids, HttpServletResponse response) throws Exception {
 		JSONObject result = new JSONObject();
 		String[] idsStr = ids.split(",");
 		for (int i = 0; i < idsStr.length; i++) {
-			tradeService.deleteTrade(Integer.parseInt(idsStr[i]));
+			incomeService.deleteIncome(Integer.parseInt(idsStr[i]));
 		}
 		result.put("errres", true);
 		result.put("errmsg", "数据删除成功！");
